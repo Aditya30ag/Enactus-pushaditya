@@ -11,36 +11,66 @@ import {
   Shield,
 } from "lucide-react";
 
+// Type definitions
+interface Location {
+  latitude: number;
+  longitude: number;
+  formattedAddress: string;
+  locality: string;
+}
+
+interface Alert {
+  type: string;
+  content: string;
+  timestamp: string;
+  severity: string;
+  source: string;
+}
+
+interface Recording {
+  url: string;
+  blob: Blob;
+  timestamp: string;
+  transcript: string;
+  language: string;
+  alerts: Alert[];
+}
+
+interface Language {
+  code: string;
+  name: string;
+}
+
 const SpeechRecognition = () => {
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState<Location | null>(null);
   
   
     const API_KEY = "AIzaSyALQLhxgvllyOzJiTgr467C8u3oUPtr_Rk";
-    const [message, setMessage] = useState(
+    const [message, setMessage] = useState<string>(
       "This is an automated call from ZARVA speech recogition system the following user:(name) is in danger kindly try to reach them we have also called the police."
     ); //This is an automated call from the distress detection system. Please respond if you need help.
     
   
    
   // State management
-  const [isListening, setIsListening] = useState(false);
-  const [finalTranscript, setFinalTranscript] = useState("");
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [error, setError] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [recordings, setRecordings] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [finalTranscript, setFinalTranscript] = useState<string>("");
+  const [interimTranscript, setInterimTranscript] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-US");
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   // Refs
-  const recognitionRef = useRef(null);
-  const streamRef = useRef(null);
-  const chunksRef = useRef([]);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
+  const recognitionRef = useRef<any>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
 
   // Constants
-  const harmfulWords = [
+  const harmfulWords: string[] = [
     "kill", // English
     "die", // English
     "hate", // English
@@ -94,7 +124,7 @@ const SpeechRecognition = () => {
     "मदद।", // Hindi (help)
   ];
 
-  const languages = [
+  const languages: Language[] = [
     { code: "en-US", name: "English (US)" },
     { code: "hi-IN", name: "Hindi" },
     { code: "es-ES", name: "Spanish" },
@@ -104,12 +134,12 @@ const SpeechRecognition = () => {
     { code: "ja-JP", name: "Japanese" },
   ];
 
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<string>("");
   
-  const [toNumber, setToNumber] = useState(localStorage.getItem("phone")); //+919835428707
-  const [toNumber1, setToNumber1] = useState(localStorage.getItem("phone1")); //+919835428707
+  const [toNumber, setToNumber] = useState<string | null>(localStorage.getItem("phone")); //+919835428707
+  const [toNumber1, setToNumber1] = useState<string | null>(localStorage.getItem("phone1")); //+919835428707
   
-  const initiateCall = async (newmessage) => {
+  const initiateCall = async (newmessage: string): Promise<void> => {
     try {
       
       const response = await fetch("https://backendzarva.onrender.com/api/twilio-call", {
@@ -130,7 +160,7 @@ const SpeechRecognition = () => {
       setStatus("Error making call");
     }
   };
-  const initiateCall1 = async (newmessage) => {
+  const initiateCall1 = async (newmessage: string): Promise<void> => {
     try {
       
       const response = await fetch("https://backendzarva.onrender.com/api/twilio-call", {
@@ -151,7 +181,7 @@ const SpeechRecognition = () => {
       setStatus("Error making call");
     }
   };
-  const initiatemessage = async (newmessage) => {
+  const initiatemessage = async (newmessage: string): Promise<void> => {
     try {
       console.log(toNumber);
       const response = await fetch("https://backendzarva.onrender.com/api/twilio-message", {
@@ -172,7 +202,7 @@ const SpeechRecognition = () => {
       setStatus("Error making call");
     }
   };
-  const initiatemessage1 = async (newmessage) => {
+  const initiatemessage1 = async (newmessage: string): Promise<void> => {
     try {
       console.log(toNumber1);
       const response = await fetch("https://backendzarva.onrender.com/api/twilio-message", {
@@ -194,7 +224,7 @@ const SpeechRecognition = () => {
     }
   };
 
-  const getLocation = () => {
+  const getLocation = (): void => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(showPosition);
     } else {
@@ -202,7 +232,7 @@ const SpeechRecognition = () => {
     }
   };
 
-  const showPosition = (position) => {
+  const showPosition = (position: GeolocationPosition): void => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
     console.log(lat, lon);
@@ -213,7 +243,7 @@ const SpeechRecognition = () => {
       .then(data => {
         if (data.status === "OK") {
           const result = data.results[0];
-          const locality = result.address_components.find(comp => 
+          const locality = result.address_components.find((comp: any) => 
             comp.types.includes("locality")
           );
           
@@ -240,7 +270,7 @@ const SpeechRecognition = () => {
   // Add calling functionality
   
   //New
-  const [savedWords, setSavedWords] = useState([]);
+  const [savedWords, setSavedWords] = useState<string[]>([]);
  // Load saved words from localStorage
  useEffect(() => {
   const loadSavedWords = () => {
@@ -257,12 +287,12 @@ const SpeechRecognition = () => {
 }, []);
 
 // Helper function to clean text from punctuation and normalize for better matching
-const cleanTextForComparison = (text) => {
+const cleanTextForComparison = (text: string): string => {
   // Remove punctuation and normalize whitespace
   return text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s+/g, " ").trim();
 };
 
-const checkHarmfulContent = useCallback((text, options = { checkSpeech: false }) => {
+const checkHarmfulContent = useCallback((text: string, options = { checkSpeech: false }): void => {
   // Clean the text by removing punctuation
   const cleanedText = cleanTextForComparison(text);
   
@@ -276,8 +306,8 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
   const cleanedHarmfulWords = allHarmfulWords.map(word => cleanTextForComparison(word));
   
   // Check each word against cleaned harmful words
-  const foundHarmfulWords = words.filter((word) =>
-    cleanedHarmfulWords.some((harmfulWord) => word.includes(harmfulWord))
+  const foundHarmfulWords = words.filter((word: string) =>
+    cleanedHarmfulWords.some((harmfulWord: string) => word.includes(harmfulWord))
   );
 
   if (foundHarmfulWords.length > 0) {
@@ -296,11 +326,11 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
   }
 }, [savedWords]);
 
-  const analyzeAudioData = useCallback((dataArray, bufferLength) => {
-    const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+  const analyzeAudioData = useCallback((dataArray: Float32Array, bufferLength: number): { average: number; highFreqIntensity: number; isDistress: boolean } => {
+    const average = dataArray.reduce((a: number, b: number) => a + b) / bufferLength;
     const highFreqData = dataArray.slice(Math.floor(bufferLength * 0.7));
     const highFreqIntensity =
-      highFreqData.reduce((a, b) => a + b) / highFreqData.length;
+      highFreqData.reduce((a: number, b: number) => a + b) / highFreqData.length;
 
     return {
       average,
@@ -314,7 +344,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
   // Speech Recognition setup
   const createSpeechRecognition = useCallback(() => {
     if ("webkitSpeechRecognition" in window) {
-      const recognition = new window.webkitSpeechRecognition();
+      const recognition = new (window as any).webkitSpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = selectedLanguage;
@@ -324,7 +354,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
   }, [selectedLanguage]);
 
   // Recording handlers
-  const startRecording = async () => {
+  const startRecording = async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -334,7 +364,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
       const recorder = new MediaRecorder(stream);
       setMediaRecorder(recorder);
 
-      recorder.ondataavailable = (event) => {
+      recorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
@@ -362,13 +392,13 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
       };
 
       recorder.start(1000);
-    } catch (err) {
+    } catch (err: any) {
       setError("Error accessing microphone: " + err.message);
     }
   };
 
   // Speech recognition handlers
-  const startListening = useCallback(async () => {
+  const startListening = useCallback(async (): Promise<void> => {
     setError("");
     const recognition = createSpeechRecognition();
     const phoneNumber = localStorage.getItem("phone");
@@ -395,7 +425,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
       setIsListening(true);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       setError(`Error occurred: ${event.error}`);
     };
 
@@ -405,7 +435,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
       }
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       let interim = "";
       let final = "";
   
@@ -429,7 +459,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
     isListening,
     startRecording,
   ]);
-  const downloadRecording = useCallback(() => {
+  const downloadRecording = useCallback((): void => {
     if (recordings.length > 0) {
       const recording = recordings[recordings.length - 1];
 
@@ -458,7 +488,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
     }
   }, [recordings]);
 
-  const downloadTranscript = useCallback(() => {
+  const downloadTranscript = useCallback((): void => {
     if (finalTranscript) {
       // Create a unique filename based on timestamp and language
       const timestamp = new Date().toLocaleString().replace(/[/:]/g, "_");
@@ -483,7 +513,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
       }, 100);
     }
   }, [finalTranscript, selectedLanguage]);
-  const clearTranscript = useCallback(() => {
+  const clearTranscript = useCallback((): void => {
     setFinalTranscript("");
     setInterimTranscript("");
     setAlerts([]);
@@ -498,7 +528,7 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
     }, 2000); // Slightly increased timeout for reliability
   }, [recordings, downloadRecording, downloadTranscript]);
 
-  const stopListening = useCallback(() => {
+  const stopListening = useCallback((): void => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
@@ -535,8 +565,8 @@ const checkHarmfulContent = useCallback((text, options = { checkSpeech: false })
     };
   }, [recordings]);
 
-  const [activeComponent, setActiveComponent] = useState(null);
-  const toggleComponent = (component) => {
+  const [activeComponent, setActiveComponent] = useState<string | null>(null);
+  const toggleComponent = (component: string): void => {
     setActiveComponent(activeComponent === component ? null : component);
   };
   
